@@ -15,8 +15,8 @@ const firebaseConfig = {
   projectId: "kreativeium",
   storageBucket: "kreativeium.firebasestorage.app",
   messagingSenderId: "512032371136",
-  appId: "1:512032371136:web:ee36e00e302574bc8c1825",
-  measurementId: "G-Y9ZTQ61ZSP"
+  appId: "1:512032371136:web:0045d3324b3cf8178c1825",
+  measurementId: "G-CE6YCQE0JP"
 };
 
 // Initialize Firebase
