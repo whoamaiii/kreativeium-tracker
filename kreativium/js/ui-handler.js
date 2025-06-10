@@ -1,29 +1,13 @@
 // js/ui-handler.js
 import * as Data from './data-manager.js';
 import * as Charts from './chart-service.js';
+import { addRippleListener, showToast } from './ui/index.js';
 
 // --- Global State for Log Form ---
 let currentLogData = { mood: null, energy: null };
 
 // Expose for testing purposes (remove in production)
 window._currentLogData = currentLogData;
-
-// --- Helper function to add ripple effect listener ---
-function addRippleListener(element) {
-    if (!element) return;
-    element.classList.add('needs-ripple');
-    element.addEventListener('click', function(event) {
-        // Prevent ripple if the click is on an interactive child (e.g., input inside a label)
-        if (event.target !== element && (event.target.tagName === 'INPUT' || event.target.tagName === 'BUTTON' || event.target.tagName === 'A')) {
-            // If the direct target is already getting a ripple or is an input, don't bubble
-            // Also, if the interactive child is the one that should have the ripple, let it handle it.
-            if (event.target.classList.contains('needs-ripple') || event.target.closest('.needs-ripple') !== element || event.target.closest('.no-bubble-ripple')) {
-                 return;
-            }
-        }
-        createRippleEffect(this, event);
-    });
-}
 
 // --- Configuration & Constants ---
 export const SENSORY_TRIGGERS = {
@@ -58,78 +42,6 @@ const PAGES = {
     QUESTS: "quests-page",
     STRATEGIES: "strategies-page"
 };
-
-// --- Helper Functions ---
-function createRippleEffect(button, event) {
-    // Ensure the target element can contain the ripple properly
-    const ownerDocument = button.ownerDocument;
-    if (!ownerDocument) return; // Element not in a document
-
-    const ripple = ownerDocument.createElement('span');
-    const rect = button.getBoundingClientRect();
-    const size = Math.max(rect.width, rect.height);
-    const x = event.clientX - rect.left - size / 2;
-    const y = event.clientY - rect.top - size / 2;
-    
-    ripple.style.width = ripple.style.height = size + 'px';
-    ripple.style.left = x + 'px';
-    ripple.style.top = y + 'px';
-    ripple.classList.add('ripple');
-    
-    button.appendChild(ripple);
-    
-    setTimeout(() => {
-        ripple.remove();
-    }, 600);
-}
-
-// --- Toast Notifications ---
-export function showToast(message, type = "info", duration = 3000) {
-    let toastContainer = document.getElementById("toast-container");
-    if (!toastContainer) {
-        console.warn("Toast container not found. Creating one.");
-        toastContainer = document.createElement('div');
-        toastContainer.id = "toast-container";
-        toastContainer.className = "fixed bottom-5 right-5 z-[100] space-y-2"; 
-        document.body.appendChild(toastContainer);
-    }
-    
-    const toast = document.createElement("div");
-    const toastMessage = document.createElement("span");
-    toastMessage.textContent = message;
-    
-    toast.className = 'toast-notification text-white py-3 px-6 rounded-lg shadow-lg opacity-0 transform translate-y-2 flex items-center space-x-2';
-
-    let iconSpan = '';
-    if (type === "error") {
-        toast.classList.add("bg-red-500");
-        iconSpan = '<span class="material-symbols-outlined">error</span>';
-    } else if (type === "success") {
-        toast.classList.add("bg-green-500");
-        iconSpan = '<span class="material-symbols-outlined">check_circle</span>';
-    } else { 
-        toast.classList.add("bg-blue-500");
-        iconSpan = '<span class="material-symbols-outlined">info</span>';
-    }
-
-    toast.innerHTML = iconSpan;
-    toast.appendChild(toastMessage);
-    
-    toastContainer.appendChild(toast);
-
-    requestAnimationFrame(() => {
-        toast.classList.add("opacity-100", "translate-y-0");
-        toast.classList.remove("opacity-0", "translate-y-2");
-    });
-    
-    if (duration > 0) {
-        setTimeout(() => {
-            toast.classList.add("opacity-0");
-            toast.classList.remove("opacity-100");
-            setTimeout(() => toast.remove(), 500); 
-        }, duration);
-    }
-}
 
 // --- Navigation ---
 export function navigateTo(hash) {
@@ -932,4 +844,6 @@ function openStrategyModal(strategy = null) {
     }
     modal.classList.remove('hidden');
     // Ripple for modal buttons is added in initializeUIElements, or ensure they are recreated with ripple here if modal is fully dynamic
-} 
+}
+
+export { showToast }; 

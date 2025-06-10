@@ -10,8 +10,8 @@
     "mock": "VITE_USE_MOCK=true vite",
     "prepare": "husky install",
     "format": "prettier --write kreativeium",
-    "lint": "eslint kreativeium --ext .js,.ts --max-warnings=0",
-    "lint:fix": "eslint kreativeium --ext .js,.ts --fix"
+    "lint": "eslint kreativium --ext .js,.ts --max-warnings=0",
+    "lint:fix": "eslint kreativium --ext .js,.ts --fix"
   },
   "repository": {
     "type": "git",
