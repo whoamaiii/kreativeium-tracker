@@ -5,8 +5,12 @@ import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebas
 import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { 
     getFirestore, collection, addDoc, query, where, getDocs, orderBy, serverTimestamp, 
-    doc, updateDoc, deleteDoc, Timestamp, runTransaction, writeBatch, limit, getDoc, setDoc
+    doc, updateDoc, deleteDoc, Timestamp, runTransaction, writeBatch, limit, getDoc, setDoc,
+    onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+// --- Import UI functions for rendering ---
+import { renderQuests, renderDashboardQuests } from './ui-handler.js';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -73,14 +77,31 @@ export async function logExperience(data) {
 
 export async function getExperiences(filters = {}) {
     if (!currentUserId) return [];
-    let q = query(collection(fbDb, "users", currentUserId, EXPERIENCES_COLLECTION), orderBy("timestamp", "desc"));
-    
-    if (filters.limit) {
-        q = query(q, limit(filters.limit));
-    }
+    try {
+        let q = query(collection(fbDb, "users", currentUserId, EXPERIENCES_COLLECTION), orderBy("timestamp", "desc"));
+        
+        if (filters.limit) {
+            q = query(q, limit(filters.limit));
+        }
 
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const querySnapshot = await getDocs(q);
+        const experiences = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        // To re-enable mock data, uncomment the following block:
+        if (experiences.length === 0 && typeof mockLogs !== 'undefined' && mockLogs.length > 0) {
+            console.log("No experiences found in Firebase, using mock data.");
+            return mockLogs;
+        }
+        return experiences;
+    } catch (error) {
+        console.error("Error getting experiences from Firebase:", error);
+        // To re-enable mock data fallback on error, uncomment the following block:
+        if (typeof mockLogs !== 'undefined' && mockLogs.length > 0) {
+            console.log("Using mock data due to Firebase error.");
+            return mockLogs;
+        }
+        return []; // Return empty array on error if mock data is disabled
+    }
 }
 
 // --- Quest Management ---
@@ -141,6 +162,38 @@ export async function getQuests() {
     const q = query(collection(fbDb, "users", currentUserId, QUESTS_COLLECTION), orderBy("createdAt", "desc"));
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+}
+
+// New function to listen for real-time quest updates
+export function listenForQuestUpdates() {
+    if (!currentUserId) {
+        console.log("User not authenticated. Quest listener not started.");
+        return () => {}; // Return a dummy unsubscribe function
+    }
+
+    const questsCollectionRef = collection(fbDb, "users", currentUserId, QUESTS_COLLECTION);
+    // Order by createdAt ascending to get oldest quests first, which simplifies renderDashboardQuests logic
+    const q = query(questsCollectionRef, orderBy("createdAt", "asc"));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+        console.log("[data-manager] Quest snapshot received:", snapshot.docs.length, "docs"); // Log number of docs
+        let allQuests = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+            createdAt: doc.data().createdAt && doc.data().createdAt.toDate ? doc.data().createdAt.toDate() : doc.data().createdAt
+        }));
+        console.log("[data-manager] Processed allQuests:", JSON.parse(JSON.stringify(allQuests))); // Log processed quests (deep copy for logging)
+
+        renderQuests(allQuests);
+        renderDashboardQuests(allQuests);
+    }, (error) => {
+        console.error("Error listening to quest updates:", error);
+        // Optionally, inform the user via a toast notification
+        // import { showToast } from './ui-handler.js'; // (if not already imported globally or passed)
+        // showToast("Error fetching quest updates. Please try refreshing.", "error");
+    });
+
+    return unsubscribe; // Return the unsubscribe function for cleanup if needed
 }
 
 export async function deleteQuest(questId) {

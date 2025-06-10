@@ -108,11 +108,33 @@ input[type="range"]::-moz-range-thumb {
     transition: all 0.3s ease;
     font-size: 1.75rem; /* Increased size */
     line-height: 1;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.mood-emoji-btn::before, .energy-level-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: radial-gradient(circle, rgba(138, 43, 226, 0.6), transparent);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s ease, height 0.6s ease;
 }
 
 .mood-emoji-btn:hover, .energy-level-btn:hover {
     transform: scale(1.15);
     border-color: var(--primary-color);
+    animation: bounce 0.5s ease-in-out;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: scale(1.15); }
+    50% { transform: scale(1.25); }
 }
 
 .mood-emoji-btn.selected, .energy-level-btn.selected {
@@ -120,6 +142,85 @@ input[type="range"]::-moz-range-thumb {
     color: white;
     transform: scale(1.1);
     box-shadow: 0 0 15px var(--shadow-medium);
+    animation: selectPulse 0.6s ease;
+}
+
+@keyframes selectPulse {
+    0% { 
+        transform: scale(1);
+        box-shadow: 0 0 0 0 var(--shadow-medium);
+    }
+    50% { 
+        transform: scale(1.2);
+        box-shadow: 0 0 20px 5px var(--shadow-strong);
+    }
+    100% { 
+        transform: scale(1.1);
+        box-shadow: 0 0 15px var(--shadow-medium);
+    }
+}
+
+.mood-emoji-btn.selected::before, .energy-level-btn.selected::before {
+    width: 200%;
+    height: 200%;
+}
+
+/* Special animation for mood buttons */
+.mood-emoji-btn {
+    transition: all 0.3s ease, filter 0.3s ease;
+}
+
+.mood-emoji-btn:active {
+    animation: emojiSpin 0.5s ease;
+}
+
+@keyframes emojiSpin {
+    0% { transform: rotate(0deg) scale(1); }
+    50% { transform: rotate(180deg) scale(1.3); }
+    100% { transform: rotate(360deg) scale(1.1); }
+}
+
+/* Special animation for energy buttons */
+.energy-level-btn {
+    transition: all 0.3s ease, filter 0.3s ease;
+}
+
+.energy-level-btn:active {
+    animation: energyFlash 0.4s ease;
+}
+
+@keyframes energyFlash {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.5); transform: scale(1.2); }
+}
+
+/* Ripple effect for buttons */
+.ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.6);
+    transform: scale(0);
+    animation: rippleEffect 0.6s ease-out;
+    pointer-events: none;
+}
+
+@keyframes rippleEffect {
+    to {
+        transform: scale(4);
+        opacity: 0;
+    }
+}
+
+/* Deselect animation */
+@keyframes deselectFade {
+    0% { 
+        transform: scale(1.1);
+        opacity: 1;
+    }
+    100% { 
+        transform: scale(1);
+        opacity: 0.8;
+    }
 }
 
 .trigger-checkbox-label {

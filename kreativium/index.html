@@ -8,11 +8,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
     
-    <!-- Chart.js from CDN (this one works) -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
-    <!-- Date libraries loaded locally from the 'lib' folder -->
-    <script src="./lib/date-fns.min.js"></script>
-    <script src="./lib/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <!-- Date & Chart libraries from CDN - revised order and sources -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/date-fns/2.29.3/date-fns.min.js"></script> <!-- 1. date-fns from cdnjs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script> <!-- 2. Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.min.js"></script> <!-- 3. Adapter (non-bundled) -->
     
     <style>
         body {
@@ -59,6 +58,84 @@
         .subtask-checkbox:checked + .subtask-label {
             text-decoration: line-through;
             color: #6b7280; /* gray-500 */
+        }
+
+        /* Added for generic ripple effect */
+        .needs-ripple {
+            position: relative;
+            overflow: hidden;
+        }
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.6); /* Semi-transparent white ripple */
+            transform: scale(0);
+            animation: rippleAnimation 0.6s linear;
+            pointer-events: none; /* So it doesn't interfere with other clicks */
+        }
+        @keyframes rippleAnimation {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+
+        /* Styles for Mood and Energy Buttons */
+        .mood-emoji-btn, .energy-level-btn {
+            position: relative; /* Crucial for ripple containment */
+            overflow: hidden;   /* Crucial for ripple containment */
+            padding: 0.75rem; /* 12px */
+            border-radius: 9999px; /* full */
+            font-size: 1.875rem; /* 30px, text-3xl */
+            line-height: 2.25rem; /* 36px */
+            cursor: pointer;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            display: inline-flex; /* Helps with alignment and ripple */
+            align-items: center;
+            justify-content: center;
+            user-select: none; /* Prevent text selection */
+        }
+
+        .mood-emoji-btn:hover, .energy-level-btn:hover {
+            transform: scale(1.15);
+        }
+
+        .mood-emoji-btn.selected, .energy-level-btn.selected {
+            transform: scale(1.1);
+            box-shadow: 0 0 15px 5px var(--selected-glow-color, rgba(168, 85, 247, 0.7)); /* Default purple glow */
+        }
+
+        /* Specific selected colors using CSS variables if needed, or direct if simple */
+        .mood-emoji-btn.selected.text-yellow-400 { --selected-glow-color: rgba(250, 204, 21, 0.7); }
+        .mood-emoji-btn.selected.text-green-400 { --selected-glow-color: rgba(74, 222, 128, 0.7); }
+        .mood-emoji-btn.selected.text-blue-400 { --selected-glow-color: rgba(96, 165, 250, 0.7); }
+        .mood-emoji-btn.selected.text-purple-400 { --selected-glow-color: rgba(168, 85, 247, 0.7); }
+        .mood-emoji-btn.selected.text-red-400 { --selected-glow-color: rgba(248, 113, 113, 0.7); }
+
+        .energy-level-btn.selected.text-green-500 { --selected-glow-color: rgba(34, 197, 94, 0.7); }
+        .energy-level-btn.selected.text-yellow-500 { --selected-glow-color: rgba(234, 179, 8, 0.7); }
+        .energy-level-btn.selected.text-red-500 { --selected-glow-color: rgba(239, 68, 68, 0.7); }
+
+        /* Keyframe Animations from ui-handler.js */
+        @keyframes selectPulse {
+            0% { transform: scale(1.1); box-shadow: 0 0 15px 5px var(--selected-glow-color, rgba(168, 85, 247, 0.7)); }
+            50% { transform: scale(1.2); box-shadow: 0 0 25px 10px var(--selected-glow-color, rgba(168, 85, 247, 0.8)); }
+            100% { transform: scale(1.1); box-shadow: 0 0 15px 5px var(--selected-glow-color, rgba(168, 85, 247, 0.7)); }
+        }
+
+        @keyframes emojiSpin {
+            0% { transform: scale(1.1) rotate(0deg); }
+            100% { transform: scale(1.1) rotate(360deg); }
+        }
+
+        @keyframes energyFlash {
+            0%, 100% { filter: brightness(100%); }
+            50% { filter: brightness(150%); }
+        }
+
+        @keyframes deselectFade {
+            from { opacity: 1; transform: scale(1.1); }
+            to { opacity: 0.5; transform: scale(0.9); }
         }
     </style>
 </head>
@@ -143,6 +220,19 @@
                                 <p class="text-gray-400 italic">Start logging to see your personalized insights here.</p>
                             </div>
                         </div>
+                        <!-- Today's Quests Widget -->
+                        <div class="bg-gray-800 p-6 rounded-xl shadow-xl hover:shadow-teal-500/30 transition-shadow duration-300">
+                            <h3 class="text-2xl font-semibold mb-4 text-teal-400 flex items-center">
+                                <span class="material-symbols-outlined mr-2">military_tech</span>Today's Missions
+                            </h3>
+                            <div id="dashboard-quest-list" class="space-y-4">
+                                <!-- Quests will be dynamically rendered here by our script -->
+                                <p class="text-gray-400 italic">No active quests for today.</p>
+                            </div>
+                            <a href="#quests" class="text-sm text-purple-400 hover:text-purple-300 font-semibold mt-4 block text-right">
+                                View all quests &rarr;
+                            </a>
+                        </div>
                     </div>
                     <div class="lg:col-span-2 space-y-8">
                         <div class="bg-gray-800 p-6 rounded-xl shadow-xl hover:shadow-orange-500/30 transition-shadow duration-300">
@@ -170,12 +260,12 @@
                         <h3 class="text-2xl font-semibold mb-4 text-purple-400">How are you feeling?</h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                              <div>
-                                <label class="font-semibold text-gray-300 mb-3 block">Current Vibe</label>
-                                <div id="mood-selector" class="flex justify-around items-center bg-gray-700/50 p-2 rounded-full"></div>
+                                <label class="font-semibold text-gray-300 mb-3 block">Current Vibe <span class="text-red-400" aria-label="required">*</span></label>
+                                <div id="mood-selector" role="radiogroup" aria-label="Select your current mood" aria-required="true" class="flex justify-around items-center bg-gray-700/50 p-2 rounded-full"></div>
                             </div>
                              <div>
-                                <label class="font-semibold text-gray-300 mb-3 block">Energy Level</label>
-                                <div id="energy-selector" class="flex justify-around items-center bg-gray-700/50 p-2 rounded-full"></div>
+                                <label class="font-semibold text-gray-300 mb-3 block">Energy Level <span class="text-red-400" aria-label="required">*</span></label>
+                                <div id="energy-selector" role="radiogroup" aria-label="Select your energy level" aria-required="true" class="flex justify-around items-center bg-gray-700/50 p-2 rounded-full"></div>
                             </div>
                         </div>
                     </div>
@@ -296,7 +386,7 @@
         </main>
     </div>
     
-    <div id="strategy-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+    <div id="strategy-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 hidden">
         <div class="bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-lg m-4 border border-gray-700">
             <h2 id="modal-title" class="text-3xl font-bold mb-6 text-purple-400">Add New Strategy</h2>
             <form id="strategy-form" class="space-y-4">
@@ -324,6 +414,7 @@
         <p id="toast-message"></p>
     </div>
 
+    <script src="js/mock-data.js"></script>
     <script type="module" src="js/main.js"></script>
 </body>
 </html>

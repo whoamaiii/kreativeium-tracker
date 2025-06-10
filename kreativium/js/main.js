@@ -2,6 +2,9 @@
 import * as Data from './data-manager.js';
 import * as UI from './ui-handler.js';
 
+// --- DOM Elements ---
+const logForm = document.getElementById('log-form');
+
 // --- App Initialization ---
 const startApp = async () => {
     try {
@@ -10,6 +13,16 @@ const startApp = async () => {
 
         // 2. Initialize the User Interface (setup event listeners, etc.)
         UI.initializeUI();
+
+        // 3. Start listening for quest updates (this will also do initial render)
+        Data.listenForQuestUpdates();
+
+        // 4. Attach log form submission listener
+        if (logForm) {
+            logForm.addEventListener('submit', UI.saveEvent);
+        } else {
+            console.warn('Could not find log-form to attach event listener.');
+        }
 
         console.log("Kreativeium App Started Successfully!");
 

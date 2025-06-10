@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test currentLogData Updates</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #444;
+            border-radius: 8px;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background: #444;
+            color: #fff;
+        }
+        button.selected {
+            background: #4CAF50;
+        }
+        #output {
+            margin-top: 20px;
+            padding: 15px;
+            background: #2a2a2a;
+            border-radius: 5px;
+            font-family: monospace;
+        }
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+            background: #333;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Testing currentLogData Updates</h1>
+    
+    <div class="test-section">
+        <h2>Mood Selection</h2>
+        <div id="mood-selector" class="button-group"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Energy Selection</h2>
+        <div id="energy-selector" class="button-group"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Current Log Data State</h2>
+        <div id="output">
+            <div>currentLogData = <span id="data-display">{ mood: null, energy: null }</span></div>
+        </div>
+        
+        <h3>Event Log:</h3>
+        <div id="event-log"></div>
+    </div>
+
+    <script type="module">
+        // Import the UI handler module
+        import { initializeUI, MOODS, ENERGY_LEVELS } from './js/ui-handler.js';
+        
+        // Make currentLogData accessible globally for testing
+        window.checkCurrentLogData = function() {
+            // Since currentLogData is module-scoped, we'll need to expose it
+            // For testing, we'll track it separately here
+            return window.testLogData || { mood: null, energy: null };
+        };
+        
+        // Initialize UI
+        initializeUI().then(() => {
+            console.log('UI initialized successfully');
+            
+            // Add event listener to monitor clicks and update display
+            document.addEventListener('click', (e) => {
+                if (e.target.closest('.mood-emoji-btn') || e.target.closest('.energy-level-btn')) {
+                    setTimeout(() => {
+                        updateDisplay();
+                    }, 100);
+                }
+            });
+        }).catch(error => {
+            console.error('Failed to initialize UI:', error);
+            document.getElementById('output').innerHTML = `<div style="color: red;">Error: ${error.message}</div>`;
+        });
+        
+        function updateDisplay() {
+            const moodBtn = document.querySelector('#mood-selector .selected');
+            const energyBtn = document.querySelector('#energy-selector .selected');
+            
+            const currentData = {
+                mood: moodBtn ? parseInt(moodBtn.dataset.value) : null,
+                energy: energyBtn ? parseInt(energyBtn.dataset.value) : null
+            };
+            
+            document.getElementById('data-display').textContent = JSON.stringify(currentData, null, 2);
+            
+            // Log the event
+            const log = document.getElementById('event-log');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            const timestamp = new Date().toLocaleTimeString();
+            entry.innerHTML = `[${timestamp}] Updated: ${JSON.stringify(currentData)}`;
+            log.insertBefore(entry, log.firstChild);
+        }
+        
+        // Initial display update
+        updateDisplay();
+    </script>
+</body>
+</html>

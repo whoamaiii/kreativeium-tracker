@@ -99,7 +99,10 @@ export function renderDashboardCharts(experiences, SENSORY_TRIGGERS) {
 
     const triggersChartCtx = document.getElementById('triggers-chart')?.getContext('2d');
     if (triggersChartCtx) {
-        if (window.triggersChartInstance) window.triggersChartInstance.destroy();
+        if (window.triggersChartInstance) {
+            window.triggersChartInstance.destroy();
+            window.triggersChartInstance = null;
+        }
         window.triggersChartInstance = new Chart(triggersChartCtx, {
             type: 'bar',
             data: {
@@ -137,15 +140,42 @@ export function renderDashboardCharts(experiences, SENSORY_TRIGGERS) {
     // Moods Chart (Well-being & Energy Flow - simplified to mood for now)
     const moodValuesOverTime = experiences
         .filter(exp => exp.timestamp && exp.mood)
-        .map(exp => ({
-            x: exp.timestamp?.toDate(), // Assumes timestamp is a Firestore Timestamp
-            y: exp.mood
-        }))
+        .map(exp => {
+            try {
+                let dateValue;
+                if (exp.timestamp && typeof exp.timestamp.toDate === 'function') {
+                    dateValue = exp.timestamp.toDate();
+                } else if (exp.timestamp) {
+                    dateValue = new Date(exp.timestamp);
+                } else {
+                    dateValue = new Date();
+                }
+                
+                console.log("[chart-service] Mapping timestamp: Original:", exp.timestamp, "Parsed:", dateValue, "Valid Date?:", !isNaN(dateValue));
+
+                if (isNaN(dateValue)) {
+                    console.error("[chart-service] Invalid date generated for timestamp:", exp.timestamp);
+                    return null;
+                }
+
+                return {
+                    x: dateValue,
+                    y: exp.mood
+                };
+            } catch (error) {
+                console.error("[chart-service] Error parsing timestamp:", exp.timestamp, error);
+                return null;
+            }
+        })
+        .filter(Boolean)
         .sort((a,b) => a.x - b.x); // Sort by date
 
     const moodsChartCtx = document.getElementById('moods-chart')?.getContext('2d');
     if (moodsChartCtx) {
-        if (window.moodsChartInstance) window.moodsChartInstance.destroy();
+        if (window.moodsChartInstance) {
+            window.moodsChartInstance.destroy();
+            window.moodsChartInstance = null;
+        }
         window.moodsChartInstance = new Chart(moodsChartCtx, {
             type: 'line',
             data: {
