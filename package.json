@@ -7,7 +7,11 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "mock": "VITE_USE_MOCK=true vite"
+    "mock": "VITE_USE_MOCK=true vite",
+    "prepare": "husky install",
+    "format": "prettier --write kreativeium",
+    "lint": "eslint kreativeium --ext .js,.ts --max-warnings=0",
+    "lint:fix": "eslint kreativeium --ext .js,.ts --fix"
   },
   "repository": {
     "type": "git",
@@ -22,9 +26,22 @@
   },
   "homepage": "https://github.com/whoamaiii/kreativeium-tracker#readme",
   "devDependencies": {
+    "@eslint/js": "^9.28.0",
     "autoprefixer": "^10.4.21",
+    "eslint": "^9.28.0",
+    "eslint-config-prettier": "^10.1.5",
+    "eslint-plugin-import": "^2.31.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.0",
     "postcss": "^8.5.4",
+    "prettier": "^3.5.3",
     "tailwindcss": "^4.1.8",
     "vite": "^6.3.5"
+  },
+  "lint-staged": {
+    "*.{js,ts}": [
+      "eslint --fix",
+      "prettier --write"
+    ]
   }
 }
