@@ -8,12 +8,57 @@
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background-color: #111827; /* gray-900 */
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .rainbow-text {
+            background-image: linear-gradient(to right, #ef4444, #f97316, #eab308, #22c55e, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .sidebar-icon {
+            font-size: 28px;
+            transition: transform 0.2s ease-in-out;
+        }
+        .sidebar-link:hover .sidebar-icon {
+            transform: scale(1.1);
+        }
+        .toast-notification {
+            transition: opacity 0.5s, transform 0.5s;
+        }
+        .card-placeholder {
+             background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='12' ry='12' stroke='%234b5563ff' stroke-width='3' stroke-dasharray='6%2c 14' stroke-dashoffset='0' stroke-linecap='square'/%3e%3c/svg%3e");
+        }
+        progress {
+            border-radius: 7px; 
+            width: 100%;
+            height: 12px;
+            box-shadow: 0 2px 3px rgba(0, 0, 0, 0.2) inset;
+        }
+        progress::-webkit-progress-bar {
+            background-color: #374151; /* gray-700 */
+            border-radius: 7px;
+        }
+        progress::-webkit-progress-value {
+            background-image: -webkit-linear-gradient(left, #a855f7, #ec4899); /* purple-500 to pink-500 */
+            border-radius: 7px; 
+            transition: width 0.5s ease;
+        }
+        .subtask-checkbox:checked + .subtask-label {
+            text-decoration: line-through;
+            color: #6b7280; /* gray-500 */
+        }
+    </style>
 </head>
 <body class="bg-gray-900 text-gray-100">
 
     <div id="app" class="flex h-screen">
-        <!-- Sidebar -->
         <aside class="w-72 bg-gray-800 p-6 flex-shrink-0 flex flex-col justify-between shadow-2xl">
             <div>
                 <div class="flex items-center space-x-3 mb-12">
@@ -65,9 +110,7 @@
             </div>
         </aside>
 
-        <!-- Main Content -->
         <main class="flex-1 p-10 overflow-y-auto bg-gradient-to-br from-gray-900 to-gray-800">
-            <!-- Dashboard Page -->
             <div id="dashboard-page" class="page">
                 <header class="mb-10">
                     <h2 class="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-orange-400">Welcome to Your Dashboard</h2>
@@ -110,7 +153,6 @@
                 </div>
             </div>
 
-            <!-- Log Experience Page -->
             <div id="log-page" class="page hidden">
                  <header class="mb-10">
                     <h2 class="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-orange-400">Log a New Experience</h2>
@@ -164,7 +206,6 @@
                  </form>
             </div>
 
-            <!-- Quest Log Page -->
             <div id="quests-page" class="page hidden">
                 <header class="mb-10">
                      <h2 class="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-orange-400">Your Quest Log</h2>
@@ -203,12 +244,10 @@
                         <span class="material-symbols-outlined mr-3 text-4xl">dynamic_feed</span>Active Quests
                     </h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6" id="quest-list">
-                        <!-- Quest cards will be rendered here -->
-                    </div>
+                         </div>
                 </div>
             </div>
 
-            <!-- History Page -->
             <div id="history-page" class="page hidden">
                 <header class="mb-10">
                     <h2 class="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-orange-400">Experience History</h2>
@@ -223,7 +262,6 @@
                 </div>
             </div>
 
-            <!-- Coping Strategies Page -->
             <div id="strategies-page" class="page hidden">
                  <header class="mb-10 flex justify-between items-center">
                     <h2 class="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-orange-400">My Coping Strategies</h2>
@@ -245,8 +283,7 @@
                     </div>
                 </div>
                 <div id="strategy-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    <!-- Strategy cards will be rendered here -->
-                </div>
+                    </div>
             </div>
         </main>
     </div>
@@ -279,6 +316,437 @@
         <p id="toast-message"></p>
     </div>
 
-    <script src="script.js" type="module" defer></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, addDoc, collection, query, onSnapshot, orderBy, Timestamp, doc, setDoc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- Firebase Configuration ---
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        // --- DOM Elements ---
+        const navLinks = document.querySelectorAll('.nav-link');
+        const pages = document.querySelectorAll('.page');
+        const logForm = document.getElementById('log-form');
+        const historyList = document.getElementById('history-list');
+        const historySearch = document.getElementById('history-search');
+        const recentActivityList = document.getElementById('recent-activity-list');
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toast-message');
+        const intensitySlider = document.getElementById('log-intensity');
+        const intensityValue = document.getElementById('intensity-value');
+        const strategiesToggle = document.getElementById('strategies-toggle');
+        const strategiesSubmenu = document.getElementById('strategies-submenu');
+        const strategyListEl = document.getElementById('strategy-list');
+        const strategyModal = document.getElementById('strategy-modal');
+        const strategyForm = document.getElementById('strategy-form');
+        const addStrategyBtn = document.getElementById('add-strategy-button');
+        const cancelStrategyBtn = document.getElementById('cancel-strategy-button');
+        const modalTitle = document.getElementById('modal-title');
+        const sosButton = document.getElementById('sos-button');
+        const questForm = document.getElementById('quest-form');
+        const questListEl = document.getElementById('quest-list');
+        const addSubtaskBtn = document.getElementById('add-subtask-btn');
+        const subtasksContainer = document.getElementById('subtasks-container');
+        const triggersChartEl = document.getElementById('triggers-chart');
+        const moodsChartEl = document.getElementById('moods-chart');
+
+        // --- App State ---
+        let allEvents = [], allStrategies = [], allQuests = [];
+        let triggersChartInstance = null;
+        let moodsChartInstance = null;
+        let currentLogData = { mood: null, energy: null, triggers: [] };
+
+        // --- Constants ---
+        const MOODS = { 'Happy': { icon: '😄' }, 'Calm': { icon: '🧘' }, 'Anxious': { icon: '😟' }, 'Sad': { icon: '😢' }, 'Angry': { icon: '😠' } };
+        const ENERGY_LEVELS = { 'Low': { icon: '🔋' }, 'Buzzy': { icon: '⚡️' }, 'High': { icon: '🔥' } };
+        const SENSORY_TRIGGERS = { 'Visual': { icon: '👁️', triggers: ['Bright Lights', 'Flickering Lights', 'Visual Clutter', 'Fast Movement']}, 'Auditory': { icon: '', triggers: ['Loud Noises', 'Sudden Sounds', 'Background Hum', 'Overlapping Speech']}, 'Tactile': { icon: '🖐️', triggers: ['Light Touch', 'Clothing Tags', 'Messy Textures', 'Grooming']}, 'Oral': { icon: '👄', triggers: ['Strong Perfumes', 'Food Smells', 'Specific Tastes', 'Pica']}, 'Movement': { icon: '🏃', triggers: ['Spinning', 'Swings', 'Unstable Surfaces', 'Car Rides']}, 'Body Awareness': { icon: '🧍', triggers: ['Lack of Movement', 'Crowds', 'Physical Impact']}, 'Internal': { icon: '❤️', triggers: ['Hunger/Thirst', 'Fatigue', 'Pain/Sickness', 'Anxiety']}, 'Social': { icon: '👥', triggers: ['New People', 'Unpredictable Interactions', 'Demands']} };
+        const TAG_COLORS = ['bg-purple-500/70', 'bg-teal-500/70', 'bg-pink-500/70', 'bg-orange-500/70', 'bg-blue-500/70', 'bg-green-500/70'];
+
+        // --- Navigation ---
+        function handleNavigation() {
+            const hash = window.location.hash || '#dashboard';
+            pages.forEach(page => page.classList.add('hidden'));
+            navLinks.forEach(link => { link.classList.remove('bg-purple-600', 'text-white', 'shadow-md'); link.classList.add('text-gray-300'); });
+            
+            let activePageId = hash.substring(1).split('?')[0] + '-page';
+            if (hash.startsWith('#strategies')) activePageId = 'strategies-page';
+            
+            const activePage = document.getElementById(activePageId);
+            const activeLink = document.querySelector(`.nav-link[href^="${hash.split('?')[0]}"]`);
+
+            if (activePage) activePage.classList.remove('hidden');
+            if (activeLink) { 
+                activeLink.classList.add('bg-purple-600', 'text-white', 'shadow-md'); 
+                activeLink.classList.remove('text-gray-300'); 
+            }
+             if (hash.startsWith('#strategies')) {
+                 strategiesSubmenu.classList.remove('hidden');
+                 strategiesToggle.querySelector('.transform').classList.add('rotate-180');
+            } else {
+                 strategiesSubmenu.classList.add('hidden');
+                 strategiesToggle.querySelector('.transform').classList.remove('rotate-180');
+            }
+            if (hash === '#log') { 
+                logForm.reset(); 
+                currentLogData = { mood: null, energy: null, triggers: [] }; 
+                document.querySelectorAll('.mood-btn, .energy-btn').forEach(btn => btn.classList.remove('bg-purple-500/40', 'scale-110')); 
+            }
+        }
+        window.addEventListener('hashchange', handleNavigation);
+        navLinks.forEach(link => {
+            if (link.id !== 'strategies-toggle') {
+                 link.addEventListener('click', (e) => { 
+                    e.preventDefault();
+                    window.location.hash = e.currentTarget.getAttribute('href'); 
+                });
+            }
+        });
+        strategiesToggle.addEventListener('click', (e) => {
+            e.preventDefault();
+            strategiesSubmenu.classList.toggle('hidden');
+            strategiesToggle.querySelector('.transform').classList.toggle('rotate-180');
+            if (!strategiesSubmenu.classList.contains('hidden')) {
+                window.location.hash = '#strategies';
+            }
+        });
+
+        // --- App Initialization ---
+        async function startApp() {
+            try {
+                await signInAnonymously(auth);
+                populateLogUI();
+                listenForEvents();
+                listenForStrategies();
+                listenForQuests();
+                questForm.addEventListener('submit', saveQuest);
+                addSubtaskBtn.addEventListener('click', addSubtaskInput);
+                historySearch.addEventListener('input', () => renderHistory(allEvents));
+                logForm.addEventListener('submit', saveEvent);
+                intensitySlider.addEventListener('input', (e) => { intensityValue.textContent = e.target.value; });
+                addStrategyBtn.addEventListener('click', () => openStrategyModal());
+                cancelStrategyBtn.addEventListener('click', closeStrategyModal);
+                strategyForm.addEventListener('submit', saveStrategy);
+                sosButton.addEventListener('click', triggerSOS);
+                handleNavigation();
+            } catch (error) {
+                console.error("Initialization error:", error);
+                showToast("Could not connect to the database.", 'error');
+            }
+        }
+
+        // --- Firestore Listeners & Savers ---
+        function listenForEvents() {
+            const eventsCollection = collection(db, 'artifacts', appId, 'public', 'data', 'events');
+            onSnapshot(query(eventsCollection, orderBy('timestamp', 'desc')), (snapshot) => {
+                allEvents = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderDashboard(allEvents);
+                renderHistory(allEvents);
+            });
+        }
+
+        function listenForStrategies() {
+            const strategiesCollection = collection(db, 'artifacts', appId, 'public', 'data', 'strategies');
+            onSnapshot(query(strategiesCollection, orderBy('title')), (snapshot) => {
+                 allStrategies = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                 renderStrategies(allStrategies);
+            });
+        }
+        
+        function listenForQuests() {
+            const questsCollection = collection(db, 'artifacts', appId, 'public', 'data', 'quests');
+            onSnapshot(query(questsCollection, orderBy('createdAt', 'desc')), (snapshot) => {
+                allQuests = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderQuests(allQuests);
+            });
+        }
+        
+        async function saveEvent(e) {
+            e.preventDefault();
+            const eventData = { ...currentLogData, timestamp: Timestamp.now(), environment: document.getElementById('log-environment').value, intensity: parseInt(intensitySlider.value), intervention: document.getElementById('log-intervention').value, notes: document.getElementById('log-notes').value };
+            if (!eventData.mood || !eventData.energy) { showToast('Please select a mood and energy level.', 'error'); return; }
+            try {
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'events'), eventData);
+                showToast('Experience Saved!', 'success');
+                window.location.hash = '#dashboard';
+            } catch (error) { console.error("Error saving event:", error); showToast('Failed to log event.', 'error'); }
+        }
+
+        async function saveStrategy(e) {
+            e.preventDefault();
+            const id = document.getElementById('strategy-id').value;
+            const strategyData = {
+                title: document.getElementById('strategy-title').value,
+                description: document.getElementById('strategy-description').value,
+                tags: document.getElementById('strategy-tags').value.split(',').map(tag => tag.trim()).filter(Boolean)
+            };
+            try {
+                if (id) {
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'strategies', id), strategyData);
+                    showToast('Strategy Updated!', 'success');
+                } else {
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'strategies'), strategyData);
+                    showToast('Strategy Added!', 'success');
+                }
+                closeStrategyModal();
+            } catch (error) { console.error("Error saving strategy:", error); showToast("Could not save strategy.", 'error'); }
+        }
+
+        async function deleteStrategy(id) {
+            if (confirm('Are you sure you want to delete this strategy?')) {
+                try {
+                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'strategies', id));
+                    showToast('Strategy Deleted!', 'success');
+                } catch (error) { console.error("Error deleting strategy:", error); showToast("Could not delete strategy.", 'error'); }
+            }
+        }
+        
+        async function saveQuest(e) {
+            e.preventDefault();
+            const title = document.getElementById('quest-title').value;
+            const subtaskInputs = document.querySelectorAll('input[name="subtask"]');
+            const subquests = Array.from(subtaskInputs).map(input => input.value.trim()).filter(text => text !== '').map(text => ({ text, completed: false }));
+            if (!title) { showToast('Quest needs a title!', 'error'); return; }
+            const questData = { title, subquests, createdAt: Timestamp.now() };
+            try {
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'quests'), questData);
+                showToast('Quest Embarked!', 'success');
+                questForm.reset();
+                subtasksContainer.innerHTML = '';
+                addSubtaskInput();
+            } catch (error) { console.error("Error saving quest:", error); showToast('Failed to start quest.', 'error'); }
+        }
+
+        async function updateSubquestStatus(questId, subquestIndex, completed) {
+            const questToUpdate = allQuests.find(q => q.id === questId);
+            if (!questToUpdate) return;
+            const updatedSubquests = [...questToUpdate.subquests];
+            updatedSubquests[subquestIndex].completed = completed;
+            const questRef = doc(db, 'artifacts', appId, 'public', 'data', 'quests', questId);
+            try { await updateDoc(questRef, { subquests: updatedSubquests }); } 
+            catch (error) { console.error("Error updating subquest:", error); }
+        }
+        
+        async function deleteQuest(questId) {
+             if (confirm('Are you sure you want to abandon this quest?')) {
+                try {
+                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'quests', questId));
+                    showToast('Quest Abandoned!', 'success');
+                } catch (error) { console.error("Error deleting quest:", error); }
+            }
+        }
+
+        // --- UI Rendering & Logic ---
+        function populateLogUI() {
+            const moodSelector = document.getElementById('mood-selector');
+            moodSelector.innerHTML = '';
+            Object.keys(MOODS).forEach(name => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = `mood-btn p-2 rounded-full transition-all duration-200 transform hover:scale-110`;
+                button.innerHTML = `<span class="text-3xl">${MOODS[name].icon}</span>`;
+                button.addEventListener('click', () => { currentLogData.mood = name; document.querySelectorAll('.mood-btn').forEach(btn => btn.classList.remove('bg-purple-500/40', 'scale-110')); button.classList.add('bg-purple-500/40', 'scale-110'); });
+                moodSelector.appendChild(button);
+            });
+
+            const energySelector = document.getElementById('energy-selector');
+            energySelector.innerHTML = '';
+            Object.keys(ENERGY_LEVELS).forEach(name => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = `energy-btn p-2 rounded-full transition-all duration-200 transform hover:scale-110`;
+                button.innerHTML = `<span class="text-3xl">${ENERGY_LEVELS[name].icon}</span>`;
+                button.addEventListener('click', () => { currentLogData.energy = name; document.querySelectorAll('.energy-btn').forEach(btn => btn.classList.remove('bg-purple-500/40', 'scale-110')); button.classList.add('bg-purple-500/40', 'scale-110'); });
+                energySelector.appendChild(button);
+            });
+
+            const triggersContainer = document.getElementById('triggers-selection');
+            triggersContainer.innerHTML = '';
+            Object.entries(SENSORY_TRIGGERS).forEach(([category, {icon, triggers}]) => {
+                const details = document.createElement('details');
+                details.className = 'bg-gray-700/50 rounded-lg overflow-hidden';
+                let checkboxHTML = triggers.map(trigger => `<div class="flex items-center"><input id="trigger-${trigger}" type="checkbox" value="${trigger}" class="h-4 w-4 rounded border-gray-500 bg-gray-600 text-purple-500 focus:ring-purple-500 trigger-checkbox"><label for="trigger-${trigger}" class="ml-3 block text-sm font-medium text-gray-300">${trigger}</label></div>`).join('');
+                details.innerHTML = `<summary class="p-3 cursor-pointer font-semibold text-gray-200 flex items-center hover:bg-gray-700"><span class="text-2xl mr-2">${icon}</span> ${category}</summary><div class="p-4 border-t border-gray-600 space-y-3">${checkboxHTML}</div>`;
+                triggersContainer.appendChild(details);
+            });
+            triggersContainer.addEventListener('change', (e) => {
+                if (e.target.classList.contains('trigger-checkbox')) {
+                    const trigger = e.target.value;
+                    if (e.target.checked) currentLogData.triggers.push(trigger);
+                    else currentLogData.triggers = currentLogData.triggers.filter(t => t !== trigger);
+                }
+            });
+        }
+
+        function addSubtaskInput() {
+            const newSubtaskDiv = document.createElement('div');
+            newSubtaskDiv.className = 'flex items-center space-x-2';
+            newSubtaskDiv.innerHTML = `<input class="flex-grow bg-gray-700 text-gray-100 border-gray-600 rounded-md p-2 focus:ring-purple-500 focus:border-purple-500 shadow-sm placeholder-gray-500" name="subtask" placeholder="Another step on your journey..." type="text"><button class="remove-subtask-btn text-red-400 hover:text-red-300 p-1 rounded-full" type="button"><span class="material-symbols-outlined text-xl">remove_circle_outline</span></button>`;
+            subtasksContainer.appendChild(newSubtaskDiv);
+            newSubtaskDiv.querySelector('.remove-subtask-btn').addEventListener('click', function() { this.parentElement.remove(); updateSubtaskRemoveButtons(); });
+            updateSubtaskRemoveButtons();
+        }
+
+        function updateSubtaskRemoveButtons() {
+            const allRemoveBtns = subtasksContainer.querySelectorAll('.remove-subtask-btn');
+            allRemoveBtns.forEach(btn => btn.classList.toggle('hidden', allRemoveBtns.length <= 1));
+        }
+        
+        function renderDashboard(events) {
+            renderRecentActivity(events);
+            renderCharts(events);
+        }
+
+        function renderRecentActivity(events) {
+            recentActivityList.innerHTML = '';
+            if (events.length === 0) { recentActivityList.innerHTML = `<p class="text-gray-400 italic">Start logging to see your personalized insights here.</p>`; return; }
+            events.slice(0, 3).forEach(event => {
+                const eventDate = event.timestamp.toDate();
+                const div = document.createElement('div');
+                div.className = 'flex items-start space-x-3 text-sm p-3 bg-gray-700/50 rounded-lg';
+                div.innerHTML = `<span class="material-symbols-outlined text-purple-400 mt-1">psychology</span><div><p class="font-medium text-gray-200">Mood: ${event.mood} (${event.energy})</p><p class="text-xs text-gray-400">${eventDate.toLocaleDateString()} at ${eventDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p></div>`;
+                recentActivityList.appendChild(div);
+            });
+        }
+        
+        function renderHistory(events) {
+            historyList.innerHTML = '';
+            const searchTerm = historySearch.value.toLowerCase();
+            const filteredEvents = events.filter(event => JSON.stringify(event).toLowerCase().includes(searchTerm));
+            if (filteredEvents.length === 0) { historyList.innerHTML = `<p class="text-gray-400 p-4">No events found.</p>`; return; }
+            filteredEvents.forEach(event => {
+                const eventDate = event.timestamp.toDate();
+                const div = document.createElement('div');
+                div.className = 'p-4 hover:bg-gray-700/50 transition-colors duration-200';
+                div.innerHTML = `<div class="flex justify-between items-start"><div><p class="font-bold text-lg text-purple-400">${event.mood} <span class="text-base text-gray-300">(${event.energy} Energy)</span></p><p class="text-sm text-gray-400 font-medium">${eventDate.toLocaleDateString()} at ${eventDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p></div><div class="text-right"><span class="text-sm font-semibold text-gray-300">Intensity: ${event.intensity}/10</span></div></div><div class="mt-3 space-y-2 text-sm text-gray-300"><p><strong class="font-semibold text-gray-400">Triggers:</strong> ${event.triggers.join(', ') || 'None specified'}</p><p><strong class="font-semibold text-gray-400">Strategy:</strong> ${event.intervention || 'None'}</p><p><strong class="font-semibold text-gray-400">Notes:</strong> ${event.notes || 'None'}</p></div>`;
+                historyList.appendChild(div);
+            });
+        }
+        
+        function renderCharts(events) {
+            Chart.defaults.color = '#d1d5db';
+            Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.1)';
+            const thirtyDaysAgo = new Date(); thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            const recentEvents = events.filter(e => e.timestamp && e.timestamp.toDate() > thirtyDaysAgo);
+            const triggerCounts = {}; const moodCounts = {};
+            recentEvents.forEach(event => {
+                event.triggers.forEach(trigger => { triggerCounts[trigger] = (triggerCounts[trigger] || 0) + 1; });
+                moodCounts[event.mood] = (moodCounts[event.mood] || 0) + 1;
+            });
+            if (triggersChartInstance) triggersChartInstance.destroy(); if (moodsChartInstance) moodsChartInstance.destroy();
+
+            const triggersCtx = triggersChartEl.getContext('2d');
+            if (Object.keys(triggerCounts).length > 0) {
+                 triggersChartInstance = new Chart(triggersCtx, { type: 'bar', data: { labels: Object.keys(triggerCounts), datasets: [{ label: 'Frequency', data: Object.values(triggerCounts), backgroundColor: 'rgba(251, 146, 60, 0.3)', borderColor: '#fb923c', borderWidth: 1, borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { stepSize: 1, color: '#9ca3af' } } , x: { grid: { display: false }, ticks: {color: '#9ca3af'} } }, plugins: { legend: { display: false } } } });
+            } else {
+                 triggersCtx.clearRect(0, 0, triggersCtx.canvas.width, triggersCtx.canvas.height);
+                 triggersCtx.textAlign = 'center';
+                 triggersCtx.font = "16px Quicksand";
+                 triggersCtx.fillStyle = '#6b7280';
+                 triggersCtx.fillText('Log experiences to see your chart', triggersCtx.canvas.width / 2, triggersCtx.canvas.height / 2);
+            }
+
+            const moodsCtx = moodsChartEl.getContext('2d');
+            if (Object.keys(moodCounts).length > 0) {
+                moodsChartInstance = new Chart(moodsCtx, { type: 'bar', data: { labels: Object.keys(moodCounts), datasets: [{ label: 'Frequency', data: Object.values(moodCounts), backgroundColor: 'rgba(45, 212, 191, 0.3)', borderColor: '#2dd4bf', borderWidth: 1, borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { stepSize: 1, color: '#9ca3af' } }, x: { grid: { display: false }, ticks: {color: '#9ca3af'} } }, plugins: { legend: { display: false } } } });
+            } else {
+                moodsCtx.clearRect(0, 0, moodsCtx.canvas.width, moodsCtx.canvas.height);
+                moodsCtx.textAlign = 'center';
+                moodsCtx.font = "16px Quicksand";
+                moodsCtx.fillStyle = '#6b7280';
+                moodsCtx.fillText('Log experiences to see your chart', moodsCtx.canvas.width / 2, moodsCtx.canvas.height / 2);
+            }
+        }
+
+        function renderStrategies(strategies) {
+            strategyListEl.innerHTML = '';
+            strategies.forEach((strategy) => {
+                const card = document.createElement('div');
+                card.className = "bg-gray-800 p-6 rounded-xl shadow-xl hover:shadow-purple-500/40 transition-all duration-300 flex flex-col justify-between hover:scale-[1.02]";
+                const tagsHTML = strategy.tags.map((tag, i) => `<span class="${TAG_COLORS[i % TAG_COLORS.length]} text-xs font-semibold px-3 py-1.5 rounded-full text-white shadow-sm">#${tag}</span>`).join('');
+                card.innerHTML = `<div><div class="flex justify-between items-start mb-3"><h4 class="text-xl font-semibold text-purple-300">${strategy.title}</h4><div class="flex space-x-1.5"><button data-id="${strategy.id}" class="edit-strategy-btn p-1.5 text-gray-400 hover:text-purple-400 bg-gray-700/50 hover:bg-gray-600 rounded-md transition-colors"><span class="material-symbols-outlined text-lg">edit</span></button><button data-id="${strategy.id}" class="delete-strategy-btn p-1.5 text-gray-400 hover:text-red-400 bg-gray-700/50 hover:bg-gray-600 rounded-md transition-colors"><span class="material-symbols-outlined text-lg">delete</span></button></div></div><p class="text-gray-300 text-sm mb-4 leading-relaxed">${strategy.description || ''}</p><div class="flex flex-wrap gap-2 mb-4">${tagsHTML}</div></div><div class="mt-auto"><a class="text-sm text-indigo-400 hover:text-indigo-300 font-medium flex items-center group" href="#"><span class="material-symbols-outlined mr-1.5 text-base group-hover:animate-pulse">play_circle</span><span>Practice Now</span></a></div>`;
+                strategyListEl.appendChild(card);
+            });
+            
+            const placeholderCard = document.createElement('div');
+            placeholderCard.className = "bg-gray-700/60 p-6 rounded-xl border-2 border-dashed border-gray-600 flex flex-col items-center justify-center text-center hover:border-purple-500 transition-colors duration-300 min-h-[280px] hover:bg-gray-700/80";
+            placeholderCard.innerHTML = `<span class="material-symbols-outlined text-6xl text-gray-500 mb-3">add_reaction</span><p class="text-gray-400 font-medium mb-4">Add more strategies to your toolkit</p><button class="add-strategy-btn-placeholder bg-purple-600 hover:bg-purple-500 text-white font-semibold py-2.5 px-5 rounded-lg transition-colors duration-300 flex items-center justify-center space-x-2 shadow-md hover:shadow-lg"><span class="material-symbols-outlined text-lg">add_circle_outline</span><span>Add Strategy</span></button>`;
+            placeholderCard.querySelector('.add-strategy-btn-placeholder').addEventListener('click', () => openStrategyModal());
+            strategyListEl.appendChild(placeholderCard);
+            
+            strategyListEl.querySelectorAll('.edit-strategy-btn').forEach(btn => btn.addEventListener('click', () => openStrategyModal(allStrategies.find(s => s.id === btn.dataset.id))));
+            strategyListEl.querySelectorAll('.delete-strategy-btn').forEach(btn => btn.addEventListener('click', () => deleteStrategy(btn.dataset.id)));
+        }
+
+        function renderQuests(quests) {
+            questListEl.innerHTML = '';
+            if (quests.length === 0) {
+                questListEl.innerHTML = `<div class="bg-gray-700/50 p-5 rounded-xl border-2 border-dashed border-gray-600 flex flex-col items-center justify-center hover:border-purple-500 transition-colors duration-300 min-h-[200px] md:col-span-2 xl:col-span-3"><span class="material-symbols-outlined text-5xl text-gray-500 mb-2">explore</span><p class="text-gray-400 text-center">Your next adventure awaits! Add a new quest to begin.</p></div>`;
+                return;
+            }
+
+            quests.forEach(quest => {
+                const card = document.createElement('div');
+                card.className = "bg-gray-800 p-5 rounded-xl shadow-lg hover:shadow-teal-500/40 transition-shadow duration-300 flex flex-col justify-between";
+                const completedCount = quest.subquests.filter(sq => sq.completed).length;
+                const progress = quest.subquests.length > 0 ? (completedCount / quest.subquests.length) * 100 : 0;
+                const subquestsHTML = quest.subquests.map((sq, index) => `<div class="flex items-center mb-1"><input type="checkbox" id="quest-${quest.id}-sub-${index}" data-quest-id="${quest.id}" data-sub-index="${index}" class="subtask-checkbox h-4 w-4 text-teal-500 border-gray-600 rounded focus:ring-teal-400 bg-gray-700" ${sq.completed ? 'checked' : ''}><label for="quest-${quest.id}-sub-${index}" class="subtask-label ml-2 text-sm text-gray-300">${sq.text}</label></div>`).join('');
+                card.innerHTML = `<div><div class="flex justify-between items-start mb-3"><h4 class="text-xl font-semibold text-teal-300">${quest.title}</h4><button class="delete-quest-btn text-gray-400 hover:text-red-400 p-1" data-id="${quest.id}"><span class="material-symbols-outlined text-lg">delete_forever</span></button></div><div class="mb-4">${subquestsHTML}</div></div><div><div class="text-xs text-gray-400 mb-1 text-right">${Math.round(progress)}% Complete</div><div class="w-full h-3 bg-gray-700 rounded-full overflow-hidden shadow-inner"><div class="h-full rounded-full bg-gradient-to-r from-teal-400 to-blue-500 transition-all duration-500" style="width: ${progress}%;"></div></div></div>`;
+                questListEl.appendChild(card);
+            });
+
+            questListEl.querySelectorAll('.subtask-checkbox').forEach(box => {
+                box.addEventListener('change', (e) => {
+                    updateSubquestStatus(e.target.dataset.questId, parseInt(e.target.dataset.subIndex), e.target.checked);
+                });
+            });
+            questListEl.querySelectorAll('.delete-quest-btn').forEach(btn => {
+                btn.addEventListener('click', () => deleteQuest(btn.dataset.id));
+            });
+        }
+        
+        function openStrategyModal(strategy = null) {
+            strategyForm.reset();
+            if (strategy) {
+                modalTitle.textContent = 'Edit Strategy';
+                document.getElementById('strategy-id').value = strategy.id;
+                document.getElementById('strategy-title').value = strategy.title;
+                document.getElementById('strategy-description').value = strategy.description;
+                document.getElementById('strategy-tags').value = strategy.tags.join(', ');
+            } else {
+                modalTitle.textContent = 'Add New Strategy';
+                 document.getElementById('strategy-id').value = '';
+            }
+            strategyModal.classList.remove('hidden');
+        }
+
+        function closeStrategyModal() {
+            strategyModal.classList.add('hidden');
+        }
+
+        function triggerSOS() {
+            if (allStrategies.length === 0) {
+                showToast("Add some strategies before using SOS!", 'error');
+                return;
+            }
+            const randomStrategy = allStrategies[Math.floor(Math.random() * allStrategies.length)];
+            alert(`SOS! Try this now:\n\n${randomStrategy.title}\n\n${randomStrategy.description}`);
+        }
+        
+        function showToast(message, type = 'success') {
+            toastMessage.textContent = message;
+            toast.className = 'toast-notification fixed bottom-5 right-5 text-white py-3 px-6 rounded-lg shadow-lg z-50';
+            if (type === 'success') { toast.classList.add('bg-purple-600'); } else { toast.classList.add('bg-red-500'); }
+            toast.classList.remove('opacity-0', 'translate-y-2');
+            setTimeout(() => { toast.classList.add('opacity-0', 'translate-y-2'); }, 3000);
+        }
+
+        // --- Start the App ---
+        startApp();
+    </script>
 </body>
 </html> 
