@@ -1,6 +1,7 @@
 // js/main.js
 import * as Data from './data-manager.js';
 import * as UI from './ui-handler.js';
+import '../tailwind.css';
 
 // --- DOM Elements ---
 const logForm = document.getElementById('log-form');
