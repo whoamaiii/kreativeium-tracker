@@ -12,15 +12,15 @@ import {
 // --- Import UI functions for rendering ---
 import { renderQuests, renderDashboardQuests } from './ui-handler.js';
 
-// Your web app's Firebase configuration
+// Firebase credentials loaded from Vite environment variables
 const firebaseConfig = {
-  apiKey: "AIzaSyBYDmydfFFjoy1HIoL1l4wB_foJM_72WMg",
-  authDomain: "kreativeium.firebaseapp.com",
-  projectId: "kreativeium",
-  storageBucket: "kreativeium.firebasestorage.app",
-  messagingSenderId: "512032371136",
-  appId: "1:512032371136:web:0045d3324b3cf8178c1825",
-  measurementId: "G-CE6YCQE0JP"
+  apiKey: import.meta.env.VITE_FB_API_KEY,
+  authDomain: import.meta.env.VITE_FB_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FB_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FB_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FB_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FB_APP_ID,
+  measurementId: import.meta.env.VITE_FB_MEASUREMENT_ID
 };
 
 // Initialize Firebase
