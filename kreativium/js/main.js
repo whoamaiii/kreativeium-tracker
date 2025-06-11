@@ -1,4 +1,5 @@
 // js/main.js
+import '../tailwind.css';
 import * as Data from './data-manager.js';
 import * as UI from './ui-handler.js';
 

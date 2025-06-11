@@ -101,8 +101,8 @@ const mockLogs = [
     }
 ];
 
-// To make it accessible in other files if using <script type="module"> or a bundler
 // export { mockLogs };
+export { mockLogs };
 
 // If not using modules, it will be globally available on the window object
 // (e.g., window.mockLogs or simply mockLogs in other scripts loaded after this one) 

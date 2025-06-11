@@ -11,18 +11,16 @@ A sensory tracking web application designed for neurodivergent individuals to mo
 3. Navigate to Project Settings (gear icon)
 4. Under "Your apps", click on the web icon (</>)
 5. Register your app and copy the Firebase configuration object
-6. Open `kreativeium/js/data-manager.js`
-7. Replace the placeholder configuration with your actual Firebase config:
+6. Kopier filen `env.example` til `.env` i prosjektets rotmappe og fyll inn dine Firebase-verdier:
 
-```javascript
-const firebaseConfig = {
-  apiKey: "YOUR_ACTUAL_API_KEY",
-  authDomain: "YOUR_ACTUAL_AUTH_DOMAIN",
-  projectId: "YOUR_ACTUAL_PROJECT_ID",
-  storageBucket: "YOUR_ACTUAL_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_ACTUAL_MESSAGING_SENDER_ID",
-  appId: "YOUR_ACTUAL_APP_ID"
-};
+```ini
+VITE_API_KEY="YOUR_FIREBASE_API_KEY"
+VITE_AUTH_DOMAIN="YOUR_FIREBASE_AUTH_DOMAIN"
+VITE_PROJECT_ID="YOUR_FIREBASE_PROJECT_ID"
+VITE_STORAGE_BUCKET="YOUR_FIREBASE_STORAGE_BUCKET"
+VITE_MESSAGING_SENDER_ID="YOUR_FIREBASE_MESSAGING_SENDER_ID"
+VITE_APP_ID="YOUR_FIREBASE_APP_ID"
+VITE_MEASUREMENT_ID="YOUR_FIREBASE_MEASUREMENT_ID"
 ```
 
 ### 2. Enable Anonymous Authentication
@@ -37,28 +35,37 @@ const firebaseConfig = {
 2. Create a database (start in test mode for development)
 3. The app will automatically create the necessary collections
 
-### 4. Run the Application
+### 4. Setup & Running with Vite
 
-Since the app uses ES6 modules, you need to serve it through a local web server:
+1. Klon repositoriet
+   ```bash
+   git clone https://github.com/whoamaiii/kreativeium-tracker.git
+   cd kreativeium-tracker
+   ```
 
-#### Option 1: VS Code Live Server
-- Install the "Live Server" extension in VS Code
-- Right-click on `kreativeium/index.html`
-- Select "Open with Live Server"
+2. Installer avhengigheter
+   ```bash
+   npm install
+   ```
 
-#### Option 2: Using http-server
-```bash
-# Install globally
-npm install -g http-server
+3. Opprett `.env` (se steg 1 over).
 
-# Navigate to the kreativeium directory
-cd kreativeium
+4. Kjør utviklingsserveren
+   ```bash
+   npm run dev
+   ```
+   Som standard er appen tilgjengelig på `http://localhost:5173`.
 
-# Start the server
-http-server -p 8080
-```
+5. Bygg for produksjon
+   ```bash
+   npm run build
+   ```
+   Dette lager en optimalisert versjon i `dist/`-mappen i prosjektets rot.
 
-Then open `http://localhost:8080` in your browser.
+6. (Valgfritt) forhåndsvis produksjonsbygget
+   ```bash
+   npm run preview
+   ```
 
 ## Project Structure
 

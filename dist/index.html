@@ -50,6 +50,7 @@
         progress::-webkit-progress-value {
             background-image: -webkit-linear-gradient(left, #a855f7, #ec4899); /* purple-500 to pink-500 */
             border-radius: 7px; 
+            -webkit-transition: width 0.5s ease; 
             transition: width 0.5s ease;
         }
         .subtask-checkbox:checked + .subtask-label {
@@ -90,7 +91,9 @@
             display: inline-flex; /* Helps with alignment and ripple */
             align-items: center;
             justify-content: center;
-            user-select: none; /* Prevent text selection */
+            -webkit-user-select: none;
+               -moz-user-select: none;
+                    user-select: none; /* Prevent text selection */
         }
 
         .mood-emoji-btn:hover, .energy-level-btn:hover {
@@ -135,6 +138,8 @@
             to { opacity: 0.5; transform: scale(0.9); }
         }
     </style>
+  <script type="module" crossorigin src="/assets/index-DmLe4zLu.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-CkrNiY4a.css">
 </head>
 <body class="bg-gray-900 text-gray-100">
 
@@ -411,6 +416,5 @@
         <p id="toast-message"></p>
     </div>
 
-    <script type="module" src="js/main.js"></script>
 </body>
 </html>

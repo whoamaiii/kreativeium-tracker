@@ -1,26 +1,27 @@
 // js/data-manager.js
 // --- Firebase Modular SDK Setup ---
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
-import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { 
-    getFirestore, collection, addDoc, query, where, getDocs, orderBy, serverTimestamp, 
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
+import {
+    getFirestore, collection, addDoc, query, where, getDocs, orderBy, serverTimestamp,
     doc, updateDoc, deleteDoc, Timestamp, runTransaction, writeBatch, limit, getDoc, setDoc,
     onSnapshot
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+} from "firebase/firestore";
 
 // --- Import UI functions for rendering ---
 import { renderQuests, renderDashboardQuests } from './ui-handler.js';
+import { mockLogs } from './mock-data.js';
 
-// Your web app's Firebase configuration
+// Firebase configuration loaded from environment variables
 const firebaseConfig = {
-  apiKey: "AIzaSyBYDmydfFFjoy1HIoL1l4wB_foJM_72WMg",
-  authDomain: "kreativeium.firebaseapp.com",
-  projectId: "kreativeium",
-  storageBucket: "kreativeium.firebasestorage.app",
-  messagingSenderId: "512032371136",
-  appId: "1:512032371136:web:0045d3324b3cf8178c1825",
-  measurementId: "G-CE6YCQE0JP"
+  apiKey: import.meta.env.VITE_API_KEY,
+  authDomain: import.meta.env.VITE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_APP_ID,
+  measurementId: import.meta.env.VITE_MEASUREMENT_ID
 };
 
 // Initialize Firebase
@@ -104,7 +105,7 @@ export async function getExperiences(filters = {}) {
         // Client-side limit if filters.limit is a number and Firebase limit wasn't used in query
         const limitedExperiences = filters.limit ? experiences.slice(0, filters.limit) : experiences;
 
-        if (limitedExperiences.length === 0 && typeof mockLogs !== 'undefined' && mockLogs.length > 0) {
+        if (limitedExperiences.length === 0 && mockLogs && mockLogs.length > 0) {
             console.log("[data-manager] No experiences from Firebase, using mockLogs. Processing mock timestamps...");
             const processedMockLogs = mockLogs.map(log => {
                 let convertedTimestamp = null;
@@ -136,7 +137,7 @@ export async function getExperiences(filters = {}) {
         return limitedExperiences;
     } catch (error) {
         console.error("[data-manager] Error in getExperiences:", error);
-        if (typeof mockLogs !== 'undefined' && mockLogs.length > 0) {
+        if (mockLogs && mockLogs.length > 0) {
             console.log("[data-manager] Using mockLogs due to Firebase error in getExperiences. Processing mock timestamps...");
             const processedMockLogsOnError = mockLogs.map(log => {
                 let convertedTimestamp = null;

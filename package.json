@@ -27,6 +27,7 @@
   "homepage": "https://github.com/whoamaiii/kreativeium-tracker#readme",
   "devDependencies": {
     "@eslint/js": "^9.28.0",
+    "@tailwindcss/postcss": "^4.1.8",
     "autoprefixer": "^10.4.21",
     "eslint": "^9.28.0",
     "eslint-config-prettier": "^10.1.5",
@@ -46,6 +47,7 @@
   },
   "dependencies": {
     "chart.js": "^4.4.9",
-    "chartjs-adapter-date-fns": "^3.0.0"
+    "chartjs-adapter-date-fns": "^3.0.0",
+    "firebase": "^11.9.1"
   }
 }
