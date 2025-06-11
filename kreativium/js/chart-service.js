@@ -37,7 +37,15 @@ export const renderCharts = (events) => {
 
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const recentEvents = events.filter(e => e.timestamp.toDate() > thirtyDaysAgo);
+
+    // recentEvents should already have JS Date objects in e.timestamp
+    const recentEvents = events.filter(e => {
+        if (!(e.timestamp instanceof Date) || isNaN(e.timestamp.getTime())) {
+            console.warn("[chart-service/renderCharts] Invalid or missing timestamp for event:", e.id, e.timestamp);
+            return false; // Skip this event if timestamp is not a valid JS Date
+        }
+        return e.timestamp.getTime() > thirtyDaysAgo.getTime(); // Compare using getTime()
+    });
 
     // Process Trigger Data
     const triggerCounts = recentEvents.flatMap(e => e.triggers).reduce((acc, trigger) => {
@@ -139,36 +147,21 @@ export function renderDashboardCharts(experiences, SENSORY_TRIGGERS) {
 
     // Moods Chart (Well-being & Energy Flow - simplified to mood for now)
     const moodValuesOverTime = experiences
-        .filter(exp => exp.timestamp && exp.mood)
+        .filter(exp => exp.timestamp && exp.mood) // Ensure timestamp and mood exist
         .map(exp => {
-            try {
-                let dateValue;
-                if (exp.timestamp && typeof exp.timestamp.toDate === 'function') {
-                    dateValue = exp.timestamp.toDate();
-                } else if (exp.timestamp) {
-                    dateValue = new Date(exp.timestamp);
-                } else {
-                    dateValue = new Date();
-                }
-                
-                console.log("[chart-service] Mapping timestamp: Original:", exp.timestamp, "Parsed:", dateValue, "Valid Date?:", !isNaN(dateValue));
-
-                if (isNaN(dateValue)) {
-                    console.error("[chart-service] Invalid date generated for timestamp:", exp.timestamp);
-                    return null;
-                }
-
-                return {
-                    x: dateValue,
-                    y: exp.mood
-                };
-            } catch (error) {
-                console.error("[chart-service] Error parsing timestamp:", exp.timestamp, error);
-                return null;
+            // exp.timestamp should already be a JS Date object from data-manager.js
+            // Directly use it, but validate it's a Date object.
+            if (!(exp.timestamp instanceof Date) || isNaN(exp.timestamp.getTime())) {
+                console.warn("Invalid or missing timestamp for experience:", exp.id, exp.timestamp);
+                return null; // Skip this data point
             }
+            return {
+                x: exp.timestamp, // Use the JS Date object directly
+                y: exp.mood
+            };
         })
-        .filter(Boolean)
-        .sort((a,b) => a.x - b.x); // Sort by date
+        .filter(Boolean) // Remove any nulls from invalid timestamps
+        .sort((a,b) => a.x.getTime() - b.x.getTime()); // Sort by date using getTime()
 
     const moodsChartCtx = document.getElementById('moods-chart')?.getContext('2d');
     if (moodsChartCtx) {

@@ -1,12 +1,6 @@
 // js/main.js
+import * as Data from './data-manager.js';
 import * as UI from './ui-handler.js';
-import '../tailwind.css';
-
-// Decide which data manager to load
-const useMock = import.meta.env.VITE_USE_MOCK === 'true';
-const dataModulePath = useMock ? './data-manager.mock.js' : './data-manager.js';
-
-let Data = null;
 
 // --- DOM Elements ---
 const logForm = document.getElementById('log-form');
@@ -14,32 +8,31 @@ const logForm = document.getElementById('log-form');
 // --- App Initialization ---
 const startApp = async () => {
     try {
-        // Dynamically import the appropriate data layer
-        Data = await import(dataModulePath);
-
-        // Connect (real or mock)
+        // 1. Connect to Firebase and sign in the user
         await Data.connectToFirebase();
 
-        // Initialize UI
-        UI.initializeUI();
+        // 2. Initialize the User Interface (setup event listeners, load initial data etc.)
+        // This will also call renderDashboardCharts internally via loadInitialData
+        UI.initializeUI(); 
 
-        // Quest updates (mock implements a noop)
-        if (typeof Data.listenForQuestUpdates === 'function') {
-            Data.listenForQuestUpdates();
-        }
+        // 3. Start listening for quest updates (this will also do initial render)
+        Data.listenForQuestUpdates();
 
-        // Attach form handler
+        // 4. Attach log form submission listener
         if (logForm) {
             logForm.addEventListener('submit', UI.saveEvent);
+        } else {
+            // It's possible the log form isn't on every page, so this might not be an error
+            // console.warn('Could not find log-form to attach event listener.'); 
         }
 
-        console.log(`Kreativeium App Started in ${useMock ? 'MOCK' : 'LIVE'} mode`);
+        console.log("Kreativeium App Started Successfully!");
 
     } catch (error) {
-        console.error('Failed to start the application:', error);
-        UI.showToast(error.message || 'Initialization error', 'error');
+        console.error("Error starting Kreativeium App:", error);
+        UI.showToast("Critical error starting the app. Please refresh.", "error");
     }
 };
 
-// --- Start the application once the DOM is fully loaded ---
+// --- Wait for the DOM to be fully loaded before starting the app ---
 document.addEventListener('DOMContentLoaded', startApp); 

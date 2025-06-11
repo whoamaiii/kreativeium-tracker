@@ -12,15 +12,15 @@ import {
 // --- Import UI functions for rendering ---
 import { renderQuests, renderDashboardQuests } from './ui-handler.js';
 
-// Firebase credentials loaded from Vite environment variables
+// Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FB_API_KEY,
-  authDomain: import.meta.env.VITE_FB_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FB_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FB_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FB_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FB_APP_ID,
-  measurementId: import.meta.env.VITE_FB_MEASUREMENT_ID
+  apiKey: "AIzaSyBYDmydfFFjoy1HIoL1l4wB_foJM_72WMg",
+  authDomain: "kreativeium.firebaseapp.com",
+  projectId: "kreativeium",
+  storageBucket: "kreativeium.firebasestorage.app",
+  messagingSenderId: "512032371136",
+  appId: "1:512032371136:web:0045d3324b3cf8178c1825",
+  measurementId: "G-CE6YCQE0JP"
 };
 
 // Initialize Firebase
@@ -81,26 +81,90 @@ export async function getExperiences(filters = {}) {
         let q = query(collection(fbDb, "users", currentUserId, EXPERIENCES_COLLECTION), orderBy("timestamp", "desc"));
         
         if (filters.limit) {
-            q = query(q, limit(filters.limit));
+            // q = query(q, limit(filters.limit)); // This was the original line, if limit is a Firebase import
+            // Assuming limit is intended to be a Firebase import, but it wasn't explicitly imported above.
+            // For now, if limit is a simple number, this would be client-side limiting after fetching all docs.
+            // To use Firebase server-side limit, ensure `limit` from 'firebase/firestore' is imported.
+            // Let's assume filters.limit is a number for client-side slicing for now, or this line needs Firebase limit function.
         }
 
         const querySnapshot = await getDocs(q);
-        const experiences = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const experiences = querySnapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                ...data,
+                // Ensure timestamp is a JS Date object if it exists and has toDate method
+                timestamp: data.timestamp && typeof data.timestamp.toDate === 'function' 
+                           ? data.timestamp.toDate() 
+                           : data.timestamp // or handle as error/default if critical
+            };
+        });
 
-        // To re-enable mock data, uncomment the following block:
-        if (experiences.length === 0 && typeof mockLogs !== 'undefined' && mockLogs.length > 0) {
-            console.log("No experiences found in Firebase, using mock data.");
-            return mockLogs;
+        // Client-side limit if filters.limit is a number and Firebase limit wasn't used in query
+        const limitedExperiences = filters.limit ? experiences.slice(0, filters.limit) : experiences;
+
+        if (limitedExperiences.length === 0 && typeof mockLogs !== 'undefined' && mockLogs.length > 0) {
+            console.log("[data-manager] No experiences from Firebase, using mockLogs. Processing mock timestamps...");
+            const processedMockLogs = mockLogs.map(log => {
+                let convertedTimestamp = null;
+                if (log.timestamp) {
+                    if (log.timestamp instanceof Date) {
+                        convertedTimestamp = log.timestamp;
+                    } else if (typeof log.timestamp === 'string' || typeof log.timestamp === 'number') {
+                        const d = new Date(log.timestamp);
+                        if (!isNaN(d.getTime())) {
+                            convertedTimestamp = d;
+                        } else {
+                            console.warn("[data-manager] Mock log timestamp string/number is invalid:", log.timestamp);
+                        }
+                    } else {
+                        console.warn("[data-manager] Mock log timestamp has unexpected type:", typeof log.timestamp, log.timestamp);
+                    }
+                } else {
+                    console.warn("[data-manager] Mock log missing timestamp:", log.id);
+                }
+                return {
+                    ...log,
+                    timestamp: convertedTimestamp 
+                };
+            });
+            console.log("[data-manager] Processed mockLogs with converted timestamps:", JSON.parse(JSON.stringify(processedMockLogs.map(l => ({...l, timestamp: l.timestamp?.toISOString()})))));
+            return processedMockLogs;
         }
-        return experiences;
+        console.log("[data-manager] Returning experiences from Firebase (if any):", JSON.parse(JSON.stringify(limitedExperiences.map(l => ({...l, timestamp: l.timestamp?.toISOString()})))));
+        return limitedExperiences;
     } catch (error) {
-        console.error("Error getting experiences from Firebase:", error);
-        // To re-enable mock data fallback on error, uncomment the following block:
+        console.error("[data-manager] Error in getExperiences:", error);
         if (typeof mockLogs !== 'undefined' && mockLogs.length > 0) {
-            console.log("Using mock data due to Firebase error.");
-            return mockLogs;
+            console.log("[data-manager] Using mockLogs due to Firebase error in getExperiences. Processing mock timestamps...");
+            const processedMockLogsOnError = mockLogs.map(log => {
+                let convertedTimestamp = null;
+                if (log.timestamp) {
+                    if (log.timestamp instanceof Date) {
+                        convertedTimestamp = log.timestamp;
+                    } else if (typeof log.timestamp === 'string' || typeof log.timestamp === 'number') {
+                        const d = new Date(log.timestamp);
+                        if (!isNaN(d.getTime())) {
+                            convertedTimestamp = d;
+                        } else {
+                            console.warn("[data-manager] (Error Path) Mock log timestamp string/number is invalid:", log.timestamp);
+                        }
+                    } else {
+                        console.warn("[data-manager] (Error Path) Mock log timestamp has unexpected type:", typeof log.timestamp, log.timestamp);
+                    }
+                } else {
+                    console.warn("[data-manager] (Error Path) Mock log missing timestamp:", log.id);
+                }
+                return {
+                    ...log,
+                    timestamp: convertedTimestamp
+                };
+            });
+            console.log("[data-manager] (Error Path) Processed mockLogs with converted timestamps:", JSON.parse(JSON.stringify(processedMockLogsOnError.map(l => ({...l, timestamp: l.timestamp?.toISOString()})))));
+            return processedMockLogsOnError;
         }
-        return []; // Return empty array on error if mock data is disabled
+        return [];
     }
 }
 
