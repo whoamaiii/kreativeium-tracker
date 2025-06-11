@@ -1,3 +1,6 @@
+import Chart from 'chart.js/auto';
+import 'chartjs-adapter-date-fns';
+
 let triggersChartInstance = null;
 let moodsChartInstance = null;
 
